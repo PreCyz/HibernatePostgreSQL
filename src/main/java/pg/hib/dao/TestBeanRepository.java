@@ -21,7 +21,7 @@ public class TestBeanRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
-    private SessionFactory sessionFactory;
+    private final SessionFactory sessionFactory;
 
     public TestBeanRepository(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
