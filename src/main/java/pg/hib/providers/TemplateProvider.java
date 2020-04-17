@@ -13,11 +13,11 @@ import java.util.concurrent.Callable;
 
 public final class TemplateProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TemplateProvider.class);
 
     private TemplateProvider() {}
 
-    public static <T> Optional<T> getTemplate(Session openedSession, Callable<? extends T> operation, Class<T> clazz) {
+    public static <T> Optional<T> singleObjectTemplate(Session openedSession, Callable<? extends T> operation, Class<T> clazz) {
         Object tmpResult;
         Transaction transaction = openedSession.beginTransaction();
         try {
@@ -32,14 +32,15 @@ public final class TemplateProvider {
             if (clazz.isInstance(tmpResult)) {
                 return Optional.of(clazz.cast(tmpResult));
             } else {
-                LOGGER.error("Result object is not type of {}", clazz.getCanonicalName());
-                throw new ClassCastException("Result object is not type of " + clazz.getCanonicalName());
+                String errMsg = String.format("Result object is not type of %s", clazz.getSimpleName());
+                LOGGER.error(errMsg);
+                throw new ClassCastException(errMsg);
             }
         }
         return Optional.empty();
     }
 
-    public static <T, C extends Collection<T>> C getCollectionTemplate(Session openedSession, Callable<C> operation) {
+    public static <T, C extends Collection<T>> C collectionTemplate(Session openedSession, Callable<C> operation) {
         Transaction transaction = openedSession.beginTransaction();
         try {
             return operation.call();
