@@ -5,6 +5,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.cfg.Environment;
 import org.hibernate.service.ServiceRegistry;
+import pg.hib.entities.CarEntity;
 import pg.hib.entities.TestBean;
 
 import java.util.Properties;
@@ -37,7 +38,8 @@ public class HibernateSessionProvider {
 
             Configuration cfg = new Configuration()
                     .setProperties(settings)
-                    .addAnnotatedClass(TestBean.class);
+                    .addAnnotatedClass(TestBean.class)
+                    .addAnnotatedClass(CarEntity.class);
 
             ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder()
                     .applySettings(cfg.getProperties())

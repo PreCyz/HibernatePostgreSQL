@@ -21,18 +21,15 @@ public abstract class AbstractRepository<EntityType extends Serializable> {
     private final Class<EntityType> entityClazz;
     private final int batchSize;
 
-    protected AbstractRepository(SessionFactory sessionFactory, Class<EntityType> entityClazz) {
-        this.sessionFactory = sessionFactory;
-        this.entityClazz = entityClazz;
-        logger = LoggerFactory.getLogger(getClass());
-        batchSize = DEFAULT_BATCH_SIZE;
-    }
-
     protected AbstractRepository(SessionFactory sessionFactory, Class<EntityType> entityClazz, int batchSize) {
         this.sessionFactory = sessionFactory;
         this.entityClazz = entityClazz;
         logger = LoggerFactory.getLogger(getClass());
         this.batchSize = batchSize;
+    }
+
+    protected AbstractRepository(SessionFactory sessionFactory, Class<EntityType> entityClazz) {
+        this (sessionFactory, entityClazz, DEFAULT_BATCH_SIZE);
     }
 
     public List<EntityType> findAll() {
@@ -59,7 +56,9 @@ public abstract class AbstractRepository<EntityType extends Serializable> {
     public List<EntityType> findByIds(Set<Serializable> ids) {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
-                Query<List<EntityType>> query = session.createQuery("FROM TestBean t WHERE t.id IN :ids");
+                Query<List<EntityType>> query = session.createQuery(
+                        String.format("FROM %s t WHERE t.id IN :ids", entityClazz.getSimpleName())
+                );
                 query.setParameter("ids", ids);
                 return castCollection(query);
             });
