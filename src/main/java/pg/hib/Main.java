@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Collectors.toUnmodifiableSet;
 
 public class Main {
 
@@ -76,7 +75,7 @@ public class Main {
         for (int i = 0; i < 100; ++i) {
             beans.add(new TestBean(random.nextBoolean(), LocalDateTime.now()));
         }
-        List<TestBean> testBean = repository.save(beans);
+        List<TestBean> testBean = repository.saveAll(beans);
         testBean.forEach(System.out::println);
     }
 
@@ -87,7 +86,8 @@ public class Main {
         batchCarSave(repository);
 
         Random random = new Random();
-        Set<Serializable> ids = Stream.of((long) random.nextInt(300), (long) random.nextInt(300)).collect(toUnmodifiableSet());
+        Set<Serializable> ids = Stream.of((long) random.nextInt(300), (long) random.nextInt(300))
+                .collect(toSet());
         LOGGER.info("Getting cars by ids {}", ids);
         List<CarEntity> carByIds = repository.findByIds(ids);
         carByIds.forEach(System.out::println);
@@ -120,7 +120,7 @@ public class Main {
                     LocalDateTime.now().minusMonths(random.nextInt(250))
             ));
         }
-        List<CarEntity> savedCars = repository.save(cars);
+        List<CarEntity> savedCars = repository.saveAll(cars);
         savedCars.forEach(System.out::println);
     }
 

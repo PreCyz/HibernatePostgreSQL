@@ -14,7 +14,7 @@ public interface BasicCRUD<EntityType extends Serializable> {
 
     Optional<EntityType> save(EntityType entity);
 
-    List<EntityType> save(List<EntityType> entities);
+    List<EntityType> saveAll(List<EntityType> entities);
 
     boolean delete(EntityType entity);
 

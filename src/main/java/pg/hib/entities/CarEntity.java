@@ -25,6 +25,11 @@ public class CarEntity implements Serializable {
     public CarEntity() { }
 
     public CarEntity(boolean active, LocalDateTime created, LocalDateTime firstRegistrationDate) {
+        this(null, active, created, firstRegistrationDate);
+    }
+
+    public CarEntity(Long id, boolean active, LocalDateTime created, LocalDateTime firstRegistrationDate) {
+        this.id = id;
         this.active = active;
         this.created = created;
         this.firstRegistrationDate = firstRegistrationDate;

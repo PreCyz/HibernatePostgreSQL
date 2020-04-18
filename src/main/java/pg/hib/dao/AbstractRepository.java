@@ -99,7 +99,7 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     }
 
     @Override
-    public List<EntityType> save(List<EntityType> entities) {
+    public List<EntityType> saveAll(List<EntityType> entities) {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
                 Set<Serializable> ids = new LinkedHashSet<>();
