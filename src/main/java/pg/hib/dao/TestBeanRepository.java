@@ -9,12 +9,13 @@ import pg.hib.providers.TemplateProvider;
 
 import java.util.List;
 
-public class TestBeanRepository extends AbstractRepository<TestBean> {
+class TestBeanRepository extends AbstractRepository<TestBean> implements TestBeanDao {
 
     public TestBeanRepository(SessionFactory sessionFactory) {
         super(sessionFactory, TestBean.class);
     }
 
+    @Override
     public List<TestBean> findByActive(boolean active) {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {

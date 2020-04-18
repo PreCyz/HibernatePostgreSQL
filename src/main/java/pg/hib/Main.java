@@ -3,17 +3,16 @@ package pg.hib;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import pg.hib.dao.CarRepository;
-import pg.hib.dao.TestBeanRepository;
+import pg.hib.dao.CarDao;
+import pg.hib.dao.DaoFactory;
+import pg.hib.dao.TestBeanDao;
 import pg.hib.entities.CarEntity;
 import pg.hib.entities.TestBean;
 import pg.hib.providers.HibernateSessionProvider;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
@@ -34,7 +33,7 @@ public class Main {
     }
 
     private static void playingWithTestBean(SessionFactory sessionFactory) {
-        TestBeanRepository repository = new TestBeanRepository(sessionFactory);
+        TestBeanDao repository = DaoFactory.getTestBeanRepository(sessionFactory);
 
         simpleOpr(repository);
 
@@ -57,7 +56,7 @@ public class Main {
 //        batchSave(repository);
     }
 
-    private static void simpleOpr(TestBeanRepository repository) {
+    private static void simpleOpr(TestBeanDao repository) {
         Optional<TestBean> testBean = repository.save(new TestBean(true, LocalDateTime.now()));
         testBean.ifPresent(bean -> LOGGER.info("This was saved {}.", bean.toString()));
 
@@ -67,7 +66,7 @@ public class Main {
         testBean.ifPresent(repository::delete);
     }
 
-    private static void batchTestBeanSave(TestBeanRepository repository) {
+    private static void batchTestBeanSave(TestBeanDao repository) {
         Random random = new Random();
         random.nextBoolean();
         List<TestBean> beans = new LinkedList<>();
@@ -79,15 +78,36 @@ public class Main {
     }
 
     private static void playingWithCarEntity(SessionFactory sessionFactory) {
-        CarRepository carRepository = new CarRepository(sessionFactory);
+        CarDao repository = DaoFactory.getCarRepository(sessionFactory);
 
-        batchCarSave(carRepository);
+        System.out.printf("Creating cars with batch############.%n");
+        batchCarSave(repository);
 
-        List<CarEntity> carByIds = carRepository.findByIds(Stream.of(1L, 3L).collect(toUnmodifiableSet()));
+        Random random = new Random();
+        Set<Serializable> ids = Stream.of((long) random.nextInt(300), (long) random.nextInt(300)).collect(toUnmodifiableSet());
+        System.out.printf("Getting cars by ids %s#################.%n", ids);
+        List<CarEntity> carByIds = repository.findByIds(ids);
         carByIds.forEach(System.out::println);
+
+        System.out.printf("Getting cars by firstRegistrationDate#################.%n");
+        LinkedList<CarEntity> carsByDate = new LinkedList<>(
+                repository.findAllByFirstRegistrationDateAfter(LocalDateTime.now().minusWeeks(50))
+        );
+        carsByDate.forEach(System.out::println);
+
+        System.out.printf("Deleting cars from previous query.#################.%n");
+        boolean deleteAll = repository.deleteAll(carsByDate);
+        System.out.printf("Cars from previous query deleted [%b].#################.%n", deleteAll);
+
+        System.out.printf("Deleting by Ids [%d] cars.#################.%n", carByIds.size());
+        boolean deleteByIds = repository.deleteByIds(carByIds.stream().map(CarEntity::getId).collect(toSet()));
+        System.out.printf("Cars from previous query deleted [%b].#################.%n", deleteByIds);
+
+        carByIds = repository.findAll();
+        System.out.printf("There are: %d cars%n", carByIds.size());
     }
 
-    private static void batchCarSave(CarRepository repository) {
+    private static void batchCarSave(CarDao repository) {
         Random random = new Random();
         List<CarEntity> cars = new LinkedList<>();
         for (int i = 0; i < 100; ++i) {
@@ -100,6 +120,5 @@ public class Main {
         List<CarEntity> savedCars = repository.save(cars);
         savedCars.forEach(System.out::println);
     }
-
 
 }
