@@ -16,14 +16,11 @@ class CarRepository extends AbstractRepository<CarEntity> implements CarDao {
         super(sessionFactory, CarEntity.class);
     }
 
-    public CarRepository(SessionFactory sessionFactory, int batchSize) {
-        super(sessionFactory, CarEntity.class, batchSize);
-    }
-
     @Override
     public List<CarEntity> findAllByFirstRegistrationDateAfter(LocalDateTime localDateTime) {
             try (Session session = sessionFactory.openSession()) {
                 return TemplateProvider.collectionTemplate(session, () -> {
+                    @SuppressWarnings("unchecked")
                     Query<List<CarEntity>> query = session.createQuery(
                             "FROM CarEntity t WHERE t.firstRegistrationDate >= :firstRegistrationDate ORDER BY t.id"
                     );

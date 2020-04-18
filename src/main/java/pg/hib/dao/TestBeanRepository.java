@@ -19,6 +19,7 @@ class TestBeanRepository extends AbstractRepository<TestBean> implements TestBea
     public List<TestBean> findByActive(boolean active) {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
+                @SuppressWarnings("unchecked")
                 Query<List<TestBean>> query = session.createQuery("FROM TestBean t WHERE t.active = :active ORDER BY t.id");
                 query.setParameter("active", active);
                 return castCollection(query);
