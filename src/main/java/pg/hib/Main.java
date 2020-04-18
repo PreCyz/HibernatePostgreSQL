@@ -63,7 +63,10 @@ public class Main {
         testBean = repository.findById(1L);
         testBean.ifPresent(bean -> LOGGER.info("This was updated {}.", bean.toString()));
 
-        testBean.ifPresent(repository::delete);
+        testBean.ifPresent(bean -> {
+            boolean delete = repository.delete(bean);
+            LOGGER.info("Record with id {} deleted [{}].", bean.getId(), delete);
+        });
     }
 
     private static void batchTestBeanSave(TestBeanDao repository) {
@@ -80,31 +83,31 @@ public class Main {
     private static void playingWithCarEntity(SessionFactory sessionFactory) {
         CarDao repository = DaoFactory.getCarRepository(sessionFactory);
 
-        System.out.printf("Creating cars with batch############.%n");
+        LOGGER.info("Creating cars with batch############.%n");
         batchCarSave(repository);
 
         Random random = new Random();
         Set<Serializable> ids = Stream.of((long) random.nextInt(300), (long) random.nextInt(300)).collect(toUnmodifiableSet());
-        System.out.printf("Getting cars by ids %s#################.%n", ids);
+        LOGGER.info("Getting cars by ids {}", ids);
         List<CarEntity> carByIds = repository.findByIds(ids);
         carByIds.forEach(System.out::println);
 
-        System.out.printf("Getting cars by firstRegistrationDate#################.%n");
+        LOGGER.info("Getting cars by firstRegistrationDate.");
         LinkedList<CarEntity> carsByDate = new LinkedList<>(
                 repository.findAllByFirstRegistrationDateAfter(LocalDateTime.now().minusWeeks(50))
         );
         carsByDate.forEach(System.out::println);
 
-        System.out.printf("Deleting cars from previous query.#################.%n");
+        LOGGER.info("Deleting cars from previous query.");
         boolean deleteAll = repository.deleteAll(carsByDate);
-        System.out.printf("Cars from previous query deleted [%b].#################.%n", deleteAll);
+        LOGGER.info("Cars from previous query deleted [{}}].", deleteAll);
 
-        System.out.printf("Deleting by Ids [%d] cars.#################.%n", carByIds.size());
+        LOGGER.info("Deleting by Ids [{}] cars.", carByIds.size());
         boolean deleteByIds = repository.deleteByIds(carByIds.stream().map(CarEntity::getId).collect(toSet()));
-        System.out.printf("Cars from previous query deleted [%b].#################.%n", deleteByIds);
+        LOGGER.info("Cars from previous query deleted [{}].", deleteByIds);
 
         carByIds = repository.findAll();
-        System.out.printf("There are: %d cars%n", carByIds.size());
+        LOGGER.info("There are: {} cars.", carByIds.size());
     }
 
     private static void batchCarSave(CarDao repository) {
