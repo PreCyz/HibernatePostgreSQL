@@ -9,7 +9,9 @@ import pg.hib.entities.TestEntity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -20,33 +22,23 @@ public final class MockProviderTest {
     private static CarDao carDao;
     private static TestEntityDao testEntityDao;
 
+    private static final int NUMBER_OF_GENERATED_CAR_ENTITIES = 10;
+    private static final int NUMBER_OF_GENERATED_TEST_ENTITIES = 5;
+
     @BeforeAll
     static void buildMock() {
-        Random random = new Random();
-        long id = 1;
-        Map<Serializable, CarEntity> existingCarEntitiesMap = new HashMap<>();
-        existingCarEntitiesMap.put(id, new CarEntity(id++, random.nextBoolean(), LocalDateTime.now(), LocalDateTime.now()));
-        existingCarEntitiesMap.put(id, new CarEntity(id++, random.nextBoolean(), LocalDateTime.now(), LocalDateTime.now()));
-        existingCarEntitiesMap.put(id, new CarEntity(id, random.nextBoolean(), LocalDateTime.now(), LocalDateTime.now()));
-
         carDao = new BasicCRUDMockProvider<CarEntity, CarDao>()
                 .addEntityClass(CarEntity.class)
                 .addMockType(CarDao.class)
                 .addDeleteAnswer(true)
-                .addExistingEntities(existingCarEntitiesMap)
+                .addExistingEntities(EntitiesGenerator.generateCarEntitiesMap(NUMBER_OF_GENERATED_CAR_ENTITIES))
                 .buildMock();
-
-        id = 1;
-        Map<Serializable, TestEntity> existingTestEntitiesMap = new HashMap<>();
-        existingTestEntitiesMap.put(id, new TestEntity(id++, random.nextBoolean(), LocalDateTime.now()));
-        existingTestEntitiesMap.put(id, new TestEntity(id++, random.nextBoolean(), LocalDateTime.now()));
-        existingTestEntitiesMap.put(id, new TestEntity(id, random.nextBoolean(), LocalDateTime.now()));
 
         testEntityDao = new BasicCRUDMockProvider<TestEntity, TestEntityDao>()
                 .addEntityClass(TestEntity.class)
                 .addMockType(TestEntityDao.class)
                 .addDeleteAnswer(true)
-                .addExistingEntities(existingTestEntitiesMap)
+                .addExistingEntities(EntitiesGenerator.generateTestEntitiesMap(NUMBER_OF_GENERATED_TEST_ENTITIES))
                 .buildMock();
     }
 
@@ -76,7 +68,7 @@ public final class MockProviderTest {
         final List<CarEntity> actual = carDao.findAll();
 
         //check @BeforeAll method
-        assertThat(actual).hasSize(3);
+        assertThat(actual).hasSize(NUMBER_OF_GENERATED_CAR_ENTITIES);
     }
 
     @Test
@@ -125,8 +117,7 @@ public final class MockProviderTest {
     void givenTestExisitngEntities_whenFindAll_thenReturnAllEntities() {
         final List<TestEntity> actual = testEntityDao.findAll();
 
-        //check @BeforeAll method
-        assertThat(actual).hasSize(3);
+        assertThat(actual).hasSize(NUMBER_OF_GENERATED_TEST_ENTITIES);
     }
 
     @Test
