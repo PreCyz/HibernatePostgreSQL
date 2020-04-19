@@ -114,7 +114,7 @@ public final class MockProviderTest {
     }
 
     @Test
-    void givenTestExisitngEntities_whenFindAll_thenReturnAllEntities() {
+    void givenTestExistingEntities_whenFindAll_thenReturnAllEntities() {
         final List<TestEntity> actual = testEntityDao.findAll();
 
         assertThat(actual).hasSize(NUMBER_OF_GENERATED_TEST_ENTITIES);
