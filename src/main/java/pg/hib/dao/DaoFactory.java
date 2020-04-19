@@ -6,7 +6,7 @@ public final class DaoFactory {
 
     private DaoFactory() { }
 
-    public static TestBeanDao getTestBeanRepository(SessionFactory sessionFactory) {
+    public static TestEntityDao getTestBeanRepository(SessionFactory sessionFactory) {
         return new TestBeanRepository(sessionFactory);
     }
 

@@ -21,14 +21,16 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
 
     protected final SessionFactory sessionFactory;
     protected final Logger logger;
+    protected final String entityName;
     private final Class<EntityType> entityClazz;
     private final int batchSize;
 
     protected AbstractRepository(SessionFactory sessionFactory, Class<EntityType> entityClazz, int batchSize) {
         this.sessionFactory = sessionFactory;
         this.entityClazz = entityClazz;
-        logger = LoggerFactory.getLogger(getClass());
+        this.entityName = entityClazz.getSimpleName();
         this.batchSize = batchSize;
+        logger = LoggerFactory.getLogger(getClass());
     }
 
     protected AbstractRepository(SessionFactory sessionFactory, Class<EntityType> entityClazz) {

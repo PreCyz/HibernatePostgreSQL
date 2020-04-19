@@ -4,23 +4,24 @@ import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
-import pg.hib.entities.TestBean;
+import pg.hib.entities.TestEntity;
 import pg.hib.providers.TemplateProvider;
 
 import java.util.List;
 
-class TestBeanRepository extends AbstractRepository<TestBean> implements TestBeanDao {
+class TestBeanRepository extends AbstractRepository<TestEntity> implements TestEntityDao {
 
     public TestBeanRepository(SessionFactory sessionFactory) {
-        super(sessionFactory, TestBean.class);
+        super(sessionFactory, TestEntity.class);
     }
 
     @Override
-    public List<TestBean> findByActive(boolean active) {
+    public List<TestEntity> findByActive(boolean active) {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
+                final String hql = String.format("FROM %s t WHERE t.active = :active ORDER BY t.id", this.entityName);
                 @SuppressWarnings("unchecked")
-                Query<List<TestBean>> query = session.createQuery("FROM TestBean t WHERE t.active = :active ORDER BY t.id");
+                Query<List<TestEntity>> query = session.createQuery(hql);
                 query.setParameter("active", active);
                 return castCollection(query);
             });

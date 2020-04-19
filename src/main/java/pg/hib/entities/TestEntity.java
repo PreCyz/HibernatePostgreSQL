@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "test_bean")
-public class TestBean implements Serializable {
+public class TestEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,9 +18,14 @@ public class TestBean implements Serializable {
     @Convert(converter = LocalDateTimeConverter.class)
     private LocalDateTime created;
 
-    public TestBean() { }
+    public TestEntity() { }
 
-    public TestBean(boolean active, LocalDateTime created) {
+    public TestEntity(boolean active, LocalDateTime created) {
+        this(null, active, created);
+    }
+
+    public TestEntity(Long id, boolean active, LocalDateTime created) {
+        this.id = id;
         this.active = active;
         this.created = created;
     }

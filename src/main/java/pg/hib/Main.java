@@ -5,9 +5,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pg.hib.dao.CarDao;
 import pg.hib.dao.DaoFactory;
-import pg.hib.dao.TestBeanDao;
+import pg.hib.dao.TestEntityDao;
 import pg.hib.entities.CarEntity;
-import pg.hib.entities.TestBean;
+import pg.hib.entities.TestEntity;
 import pg.hib.providers.HibernateSessionProvider;
 
 import java.io.Serializable;
@@ -32,31 +32,31 @@ public class Main {
     }
 
     private static void playingWithTestBean(SessionFactory sessionFactory) {
-        TestBeanDao repository = DaoFactory.getTestBeanRepository(sessionFactory);
+        TestEntityDao repository = DaoFactory.getTestBeanRepository(sessionFactory);
 
         simpleOpr(repository);
 
-        List<TestBean> all = repository.findAll();
+        List<TestEntity> all = repository.findAll();
         LOGGER.info("This is what I got from db {}", all);
 
         all = repository.findByIds(Stream.of(1L, 3L).collect(toSet()));
         LOGGER.info("This is what I got from db {}", all);
 
-        Optional<TestBean> testBean = repository.findById(4L);
+        Optional<TestEntity> testBean = repository.findById(4L);
         testBean.ifPresent(tb -> LOGGER.info("This is what I got from db {}", tb));
 
-        List<TestBean> activeEntities = repository.findByActive(true);
+        List<TestEntity> activeEntities = repository.findByActive(true);
         LOGGER.info("Only active entities {}", activeEntities);
 
-        repository.save(new TestBean(false, LocalDateTime.now()));
-        List<TestBean> inactiveEntities = repository.findByActive(false);
+        repository.save(new TestEntity(false, LocalDateTime.now()));
+        List<TestEntity> inactiveEntities = repository.findByActive(false);
         LOGGER.info("Only inactive entities {}", inactiveEntities);
 
 //        batchSave(repository);
     }
 
-    private static void simpleOpr(TestBeanDao repository) {
-        Optional<TestBean> testBean = repository.save(new TestBean(true, LocalDateTime.now()));
+    private static void simpleOpr(TestEntityDao repository) {
+        Optional<TestEntity> testBean = repository.save(new TestEntity(true, LocalDateTime.now()));
         testBean.ifPresent(bean -> LOGGER.info("This was saved {}.", bean.toString()));
 
         testBean = repository.findById(1L);
@@ -68,14 +68,14 @@ public class Main {
         });
     }
 
-    private static void batchTestBeanSave(TestBeanDao repository) {
+    private static void batchTestBeanSave(TestEntityDao repository) {
         Random random = new Random();
         random.nextBoolean();
-        List<TestBean> beans = new LinkedList<>();
+        List<TestEntity> beans = new LinkedList<>();
         for (int i = 0; i < 100; ++i) {
-            beans.add(new TestBean(random.nextBoolean(), LocalDateTime.now()));
+            beans.add(new TestEntity(random.nextBoolean(), LocalDateTime.now()));
         }
-        List<TestBean> testBean = repository.saveAll(beans);
+        List<TestEntity> testBean = repository.saveAll(beans);
         testBean.forEach(System.out::println);
     }
 
