@@ -1,6 +1,8 @@
 package pg.hib;
 
+import org.hibernate.HibernateException;
 import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.OngoingStubbing;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pg.hib.dao.BasicCRUD;
@@ -22,6 +24,8 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
     private Class<EntityType> entityClass;
     private Class<MockType> returnTypeClass;
     private boolean deleteAnswer;
+    private boolean updateAnswer;
+    private List<EntityType> selectQueryResult;
 
     public BasicCRUDMockProvider() {
     }
@@ -46,6 +50,16 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
         return this;
     }
 
+    public BasicCRUDMockProvider<EntityType, MockType> addUpdateAnswer(boolean updateAnswer) {
+        this.updateAnswer = updateAnswer;
+        return this;
+    }
+
+    public BasicCRUDMockProvider<EntityType, MockType> addSelectQueryResult(List<EntityType> selectQueryResult) {
+        this.selectQueryResult = selectQueryResult;
+        return this;
+    }
+
     public MockType buildMock() {
 
         final Map<Serializable, EntityType> workingCopyMap =
@@ -60,6 +74,10 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
         mockWriteMethods(entityClass, mockObj);
 
         mockDeleteMethods(entityClass, mockObj);
+
+        mockExecuteUpdate(entityClass, mockObj);
+
+        mockExecuteSelect(entityClass, mockObj);
 
         return mockObj;
     }
@@ -115,5 +133,20 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
         when(mockObj.delete(any(entityClass))).thenReturn(deleteAnswer);
         when(mockObj.deleteByIds(anyCollection())).thenReturn(deleteAnswer);
         when(mockObj.deleteAll(anyCollection())).thenReturn(deleteAnswer);
+    }
+
+    private void mockExecuteUpdate(Class<EntityType> entityClass, MockType mockObj) {
+        when(mockObj.executeUpdateQuery(anyString())).thenReturn(updateAnswer);
+    }
+
+    private void mockExecuteSelect(Class<EntityType> entityClass, MockType mockObj) {
+        final OngoingStubbing<List<EntityType>> when = when(mockObj.executeSelectQuery(anyString()));
+        if (selectQueryResult == null) {
+            when.thenThrow(
+                    new HibernateException("In order to use native SQL select query this method has to be implemented.")
+            );
+        } else {
+            when.thenReturn(selectQueryResult);
+        }
     }
 }

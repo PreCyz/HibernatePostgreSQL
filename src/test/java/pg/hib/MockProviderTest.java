@@ -1,5 +1,6 @@
 package pg.hib;
 
+import org.hibernate.HibernateException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import pg.hib.dao.CarDao;
@@ -9,6 +10,7 @@ import pg.hib.entities.TestEntity;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +18,7 @@ import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public final class MockProviderTest {
 
@@ -32,6 +35,8 @@ public final class MockProviderTest {
                 .addMockType(CarDao.class)
                 .addDeleteAnswer(true)
                 .addExistingEntities(EntitiesGenerator.generateCarEntitiesMap(NUMBER_OF_GENERATED_CAR_ENTITIES))
+                .addSelectQueryResult(new ArrayList<>())
+                .addUpdateAnswer(true)
                 .buildMock();
 
         testEntityDao = new BasicCRUDMockProvider<TestEntity, TestEntityDao>()
@@ -93,6 +98,19 @@ public final class MockProviderTest {
     }
 
     @Test
+    void givenCarEntityUpdateQuery_whenExecuteUpdateQuery_thenReturnFalse() {
+        final boolean result = carDao.executeUpdateQuery("update cars set active = NOT active");
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void givenTestBeanSelectQuery_whenExecuteUpdateQuery_thenThrowHibernateException() {
+        final List<CarEntity> carEntities = carDao.executeSelectQuery("select * from cars");
+        assertThat(carEntities).isEmpty();
+    }
+
+    @Test
     void givenTestEntityAndEntityClass_whenSave_thenReturnEntityWithId() {
         final Optional<TestEntity> actual = testEntityDao.save(new TestEntity(true, LocalDateTime.now()));
 
@@ -139,5 +157,22 @@ public final class MockProviderTest {
         assertThat(actual).hasSize(ids.size());
         assertThat(actual.stream().map(TestEntity::getId).collect(toList()))
                 .containsExactly(1L, 2L);
+    }
+
+    @Test
+    void givenTestEntityUpdateQuery_whenExecuteUpdateQuery_thenReturnFalse() {
+        final boolean result = testEntityDao.executeUpdateQuery("update test_bean set active = NOT active");
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void givenTestEntitySelectQuery_whenExecuteUpdateQuery_thenThrowHibernateException() {
+        try {
+            testEntityDao.executeSelectQuery("select * from test_bean");
+            fail("Should throw HibernateException.");
+        } catch (HibernateException ex) {
+            assertThat(ex.getMessage()).isEqualTo("In order to use native SQL select query this method has to be implemented.");
+        }
     }
 }
