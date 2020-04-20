@@ -10,9 +10,11 @@ import pg.hib.entities.CarEntity;
 import pg.hib.entities.TestEntity;
 import pg.hib.providers.HibernateSessionProvider;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
@@ -82,7 +84,7 @@ public class Main {
     private static void playingWithCarEntity(SessionFactory sessionFactory) {
         CarDao repository = DaoFactory.getCarRepository(sessionFactory);
 
-        LOGGER.info("Creating cars with batch############.%n");
+        /*LOGGER.info("Creating cars with batch############.%n");
         batchCarSave(repository);
 
         Random random = new Random();
@@ -108,6 +110,12 @@ public class Main {
 
         carByIds = repository.findAll();
         LOGGER.info("There are: {} cars.", carByIds.size());
+
+        final boolean queryResult = repository.executeUpdateQuery("update cars c set active = NOT active");
+        LOGGER.info("Result is here {}", queryResult);*/
+
+        final List<CarEntity> carEntities = repository.executeSelectQuery("SELECT * FROM cars WHERE active = true");
+        LOGGER.info("{}", carEntities);
     }
 
     private static void batchCarSave(CarDao repository) {

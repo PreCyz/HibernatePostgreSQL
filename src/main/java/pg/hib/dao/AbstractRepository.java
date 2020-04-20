@@ -4,6 +4,7 @@ import org.hibernate.HibernateException;
 import org.hibernate.LockMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,8 @@ import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.util.*;
+
+import static java.util.stream.Collectors.toList;
 
 abstract class AbstractRepository<EntityType extends Serializable> implements BasicCRUD<EntityType> {
 
@@ -113,7 +116,12 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
                         session.clear();
                     }
                 }
-                return findByIds(ids);
+                @SuppressWarnings("unchecked")
+                Query<List<EntityType>> query = session.createQuery(
+                        String.format("FROM %s t WHERE t.id IN :ids", entityClazz.getSimpleName())
+                );
+                query.setParameter("ids", ids);
+                return castCollection(query);
             });
         } catch (Exception ex) {
             logger.error("Something went wrong.", ex);
@@ -171,5 +179,41 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
             throw new HibernateException(ex);
         }
     }
+
+    @Override
+    public boolean executeUpdateQuery(final String updateQuery) {
+        try (Session session = sessionFactory.openSession()) {
+            Optional<Boolean> queryExec = TemplateProvider.singleObjectTemplate(session, () -> {
+                @SuppressWarnings("rawtypes")
+                NativeQuery sql = session.createSQLQuery(updateQuery);
+                final int result = sql.executeUpdate();
+                logger.info("The result of the query {}.", result);
+                return true;
+            }, Boolean.class);
+            return queryExec.orElse(false);
+        } catch (Exception ex) {
+            logger.error("Something went wrong.", ex);
+            throw new HibernateException(ex);
+        }
+    }
+
+    @Override
+    public List<EntityType> executeSelectQuery(final String selectQuery) {
+        try (Session session = sessionFactory.openSession()) {
+
+            return TemplateProvider.collectionTemplate(session, () -> {
+                @SuppressWarnings("unchecked")
+                NativeQuery<Object[]> sql = session.createSQLQuery(selectQuery);
+                return sql.getResultStream().map(this::castObject).collect(toList());
+            });
+        } catch (Exception ex) {
+            logger.error("Something went wrong.", ex);
+            throw new HibernateException(ex);
+        }
+    }
+
+    protected EntityType castObject(Object[] fields) {
+        throw new HibernateException("In order to use native SQL select query this method has to be implemented.");
+    };
 
 }

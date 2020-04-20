@@ -5,9 +5,15 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.Query;
 import pg.hib.entities.CarEntity;
+import pg.hib.entities.LocalDateTimeConverter;
 import pg.hib.providers.TemplateProvider;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 class CarRepository extends AbstractRepository<CarEntity> implements CarDao {
@@ -33,5 +39,26 @@ class CarRepository extends AbstractRepository<CarEntity> implements CarDao {
                 logger.error("Something went wrong.", ex);
                 throw new HibernateException(ex);
             }
+    }
+
+    @Override
+    protected CarEntity castObject(Object[] fields) {
+        try {
+            final Class<?>[] parameterTypes = Arrays.stream(CarEntity.class.getDeclaredFields())
+                    .map(Field::getType)
+                    .toArray(Class<?>[]::new);
+            final Constructor<CarEntity> constructor = CarEntity.class.getConstructor(parameterTypes);
+            for (int i = 0; i < fields.length; i++) {
+                if (fields[i] instanceof BigInteger) {
+                    fields[i] = ((BigInteger)fields[i]).longValue();
+                } else if (fields[i] instanceof String) {
+                    fields[i] = new LocalDateTimeConverter().convertToEntityAttribute(String.valueOf(fields[i]));
+                }
+            }
+            return constructor.newInstance(fields);
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            logger.error("Problem with casting object to {}.", entityName, e);
+        }
+        return null;
     }
 }

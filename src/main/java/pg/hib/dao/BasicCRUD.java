@@ -21,4 +21,8 @@ public interface BasicCRUD<EntityType extends Serializable> {
     boolean deleteByIds(Collection<Serializable> entities);
 
     boolean deleteAll(Collection<EntityType> entities);
+
+    abstract List<EntityType> executeSelectQuery(String selectQuery);
+
+    boolean executeUpdateQuery(String sqlQuery);
 }
