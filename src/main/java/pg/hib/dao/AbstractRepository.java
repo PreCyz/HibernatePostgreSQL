@@ -65,6 +65,11 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
         }
     }
 
+    /**
+    * This method will work properly if the id attribute on the entity has the name <b>id</b>.
+    * Otherwise, the method will return empty collection. If the id attribute has other name than <i>id</i> 
+    * then this method has to be overritten in the specific repository class.
+    */
     @Override
     public List<EntityType> findByIds(Collection<Serializable> ids) {
         try (Session session = sessionFactory.openSession()) {
