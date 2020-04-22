@@ -10,11 +10,9 @@ import pg.hib.entities.CarEntity;
 import pg.hib.entities.TestEntity;
 import pg.hib.providers.HibernateSessionProvider;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toSet;
@@ -27,7 +25,7 @@ public class Main {
         HibernateSessionProvider hibSessionProvider = HibernateSessionProvider.getInstance();
         SessionFactory sessionFactory = hibSessionProvider.getSessionFactory();
 
-        //playingWithTestBean(sessionFactory);
+        playingWithTestBean(sessionFactory);
         playingWithCarEntity(sessionFactory);
 
         sessionFactory.close();
@@ -36,15 +34,17 @@ public class Main {
     private static void playingWithTestBean(SessionFactory sessionFactory) {
         TestEntityDao repository = DaoFactory.getTestBeanRepository(sessionFactory);
 
+        repository.deleteAll(repository.findAll());
+
         simpleOpr(repository);
 
         List<TestEntity> all = repository.findAll();
         LOGGER.info("This is what I got from db {}", all);
 
-        all = repository.findByIds(Stream.of(1L, 3L).collect(toSet()));
+        all = repository.findByIds(Stream.of(1, 3).collect(toSet()));
         LOGGER.info("This is what I got from db {}", all);
 
-        Optional<TestEntity> testBean = repository.findById(4L);
+        Optional<TestEntity> testBean = repository.findById(4);
         testBean.ifPresent(tb -> LOGGER.info("This is what I got from db {}", tb));
 
         List<TestEntity> activeEntities = repository.findByActive(true);
@@ -54,14 +54,14 @@ public class Main {
         List<TestEntity> inactiveEntities = repository.findByActive(false);
         LOGGER.info("Only inactive entities {}", inactiveEntities);
 
-//        batchSave(repository);
+        batchTestBeanSave(repository);
     }
 
     private static void simpleOpr(TestEntityDao repository) {
         Optional<TestEntity> testBean = repository.save(new TestEntity(true, LocalDateTime.now()));
         testBean.ifPresent(bean -> LOGGER.info("This was saved {}.", bean.toString()));
 
-        testBean = repository.findById(1L);
+        testBean = repository.findById(1);
         testBean.ifPresent(bean -> LOGGER.info("This was updated {}.", bean.toString()));
 
         testBean.ifPresent(bean -> {
@@ -84,7 +84,9 @@ public class Main {
     private static void playingWithCarEntity(SessionFactory sessionFactory) {
         CarDao repository = DaoFactory.getCarRepository(sessionFactory);
 
-        /*LOGGER.info("Creating cars with batch############.%n");
+        repository.deleteAll(repository.findAll());
+
+        LOGGER.info("Creating cars with batch############.%n");
         batchCarSave(repository);
 
         Random random = new Random();
@@ -112,7 +114,7 @@ public class Main {
         LOGGER.info("There are: {} cars.", carByIds.size());
 
         final boolean queryResult = repository.executeUpdateQuery("update cars c set active = NOT active");
-        LOGGER.info("Result is here {}", queryResult);*/
+        LOGGER.info("Result is here {}", queryResult);
 
         final List<CarEntity> carEntities = repository.executeSelectQuery("SELECT * FROM cars WHERE active = true");
         LOGGER.info("{}", carEntities);

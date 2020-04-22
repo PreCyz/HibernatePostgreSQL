@@ -9,11 +9,10 @@ import pg.hib.entities.CarEntity;
 import pg.hib.entities.TestEntity;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -25,8 +24,7 @@ public final class MockProviderTest {
     private static CarDao carDao;
     private static TestEntityDao testEntityDao;
 
-    private static final int NUMBER_OF_GENERATED_CAR_ENTITIES = 10;
-    private static final int NUMBER_OF_GENERATED_TEST_ENTITIES = 5;
+    private static final int DEFAULT_NUMBER_ENTITIES_TO_GENERATE = 10;
 
     @BeforeAll
     static void buildMock() {
@@ -34,7 +32,7 @@ public final class MockProviderTest {
                 .addEntityClass(CarEntity.class)
                 .addMockType(CarDao.class)
                 .addDeleteAnswer(true)
-                .addExistingEntities(EntitiesGenerator.generateCarEntitiesMap(NUMBER_OF_GENERATED_CAR_ENTITIES))
+                .addExistingEntities(EntitiesGenerator.generateCarEntitiesMap(DEFAULT_NUMBER_ENTITIES_TO_GENERATE))
                 .addSelectQueryResult(new ArrayList<>())
                 .addUpdateAnswer(true)
                 .buildMock();
@@ -43,7 +41,7 @@ public final class MockProviderTest {
                 .addEntityClass(TestEntity.class)
                 .addMockType(TestEntityDao.class)
                 .addDeleteAnswer(true)
-                .addExistingEntities(EntitiesGenerator.generateTestEntitiesMap(NUMBER_OF_GENERATED_TEST_ENTITIES))
+                .addExistingEntities(EntitiesGenerator.generateTestEntitiesMap(DEFAULT_NUMBER_ENTITIES_TO_GENERATE))
                 .buildMock();
     }
 
@@ -73,7 +71,7 @@ public final class MockProviderTest {
         final List<CarEntity> actual = carDao.findAll();
 
         //check @BeforeAll method
-        assertThat(actual).hasSize(NUMBER_OF_GENERATED_CAR_ENTITIES);
+        assertThat(actual).hasSize(DEFAULT_NUMBER_ENTITIES_TO_GENERATE);
     }
 
     @Test
@@ -135,12 +133,12 @@ public final class MockProviderTest {
     void givenTestExistingEntities_whenFindAll_thenReturnAllEntities() {
         final List<TestEntity> actual = testEntityDao.findAll();
 
-        assertThat(actual).hasSize(NUMBER_OF_GENERATED_TEST_ENTITIES);
+        assertThat(actual).hasSize(DEFAULT_NUMBER_ENTITIES_TO_GENERATE);
     }
 
     @Test
     void givenExistingTestEntities_whenFindById_thenReturnEntityWithThatId() {
-        final long id = 1L;
+        final int id = 1;
         final Optional<TestEntity> actual = testEntityDao.findById(id);
 
         //check @BeforeAll method
@@ -150,13 +148,13 @@ public final class MockProviderTest {
 
     @Test
     void givenExistingTestEntities_whenFindByIds_thenReturnEntitiesWithTheseIds() {
-        final List<Serializable> ids = Arrays.asList(1L, 2L);
+        final List<Serializable> ids = Arrays.asList(1, 2);
         final List<TestEntity> actual = testEntityDao.findByIds(ids);
 
         //check @BeforeAll method
         assertThat(actual).hasSize(ids.size());
         assertThat(actual.stream().map(TestEntity::getId).collect(toList()))
-                .containsExactly(1L, 2L);
+                .containsExactly(1, 2);
     }
 
     @Test
@@ -174,5 +172,28 @@ public final class MockProviderTest {
         } catch (HibernateException ex) {
             assertThat(ex.getMessage()).isEqualTo("In order to use native SQL select query this method has to be implemented.");
         }
+    }
+
+    @Test
+    void givenTestEntity_whenGetIdFiledTypeAndName_thenReturnIdNameAndItsType() {
+        final LinkedHashMap<String, Class<?>> idAndType = getIdAndType();
+
+        assertThat(idAndType.keySet()).containsExactly("id");
+        assertThat(idAndType.values()).containsExactly(Integer.class);
+    }
+
+    private LinkedHashMap<String, Class<?>> getIdAndType() {
+        LinkedHashMap<String, Class<?>> result = new LinkedHashMap<>(1);
+        for (Field field : TestEntity.class.getDeclaredFields()) {
+//            System.out.printf("name - %s, type - %s%n", field.getName(), field.getType());
+            for (Annotation declaredAnnotation : field.getDeclaredAnnotations()) {
+                if (declaredAnnotation.annotationType() == javax.persistence.Id.class) {
+//                    System.out.printf("annotation type %s%n", declaredAnnotation.annotationType());
+                    result.put(field.getName(), field.getType());
+                }
+//                System.out.printf("%n");
+            }
+        }
+        return result;
     }
 }

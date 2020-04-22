@@ -106,7 +106,7 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
             final EntityType entity = invocationOnMock.getArgument(0);
             final Field id = entity.getClass().getDeclaredField("id");
             id.setAccessible(true);
-            id.set(entity, Long.valueOf(new Random().nextInt(1000) + ""));
+            id.set(entity, getIdValue(id, Long.valueOf(new Random().nextInt(1000) + "")));
             LOGGER.info("Entity of type {} was saved. {} id was given.", entity.getClass(), id.get(entity));
             return Optional.of(entity);
         });
@@ -119,7 +119,7 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
                 try {
                     final Field id = entity.getClass().getDeclaredField("id");
                     id.setAccessible(true);
-                    id.set(entity, Long.valueOf(idNumber + ""));
+                    id.set(entity, getIdValue(id, idNumber));
                     LOGGER.info("Entity of type {} was saved. {} id was given.", entity.getClass(), idNumber);
                 } catch (IllegalAccessException | NoSuchFieldException e) {
                     LOGGER.error("Could not provide id for the entity {}.", entity, e);
@@ -127,6 +127,16 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
             }
             return entities;
         });
+    }
+
+    private Serializable getIdValue(Field field, long value) {
+        Serializable idValue = Long.valueOf(value);
+        if (field.getType() == Integer.class){
+            idValue = Integer.parseInt("" + value);
+        } else if (field.getType() == String.class) {
+            idValue = String.valueOf(value);
+        }
+        return idValue;
     }
 
     private void mockDeleteMethods(Class<EntityType> entityClass, MockType mockObj) {

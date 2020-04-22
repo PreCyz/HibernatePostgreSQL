@@ -25,7 +25,7 @@ public final class EntitiesGenerator {
     public static Map<Serializable, TestEntity> generateTestEntitiesMap(int numberOfEntities) {
         Random random = new Random();
         Map<Serializable, TestEntity> entitiesMap = new HashMap<>(numberOfEntities);
-        for (long i = 1; i <= numberOfEntities; ++i) {
+        for (int i = 1; i <= numberOfEntities; ++i) {
             entitiesMap.put(i, new TestEntity(i, random.nextBoolean(), LocalDateTime.now()));
         }
         return entitiesMap;

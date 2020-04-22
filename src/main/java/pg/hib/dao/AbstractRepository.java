@@ -1,7 +1,6 @@
 package pg.hib.dao;
 
 import org.hibernate.HibernateException;
-import org.hibernate.LockMode;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.query.NativeQuery;
@@ -14,6 +13,8 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaDelete;
 import javax.persistence.criteria.Root;
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.*;
 
 import static java.util.stream.Collectors.toList;
@@ -58,25 +59,21 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     @Override
     public Optional<EntityType> findById(Serializable id) {
         try (Session session = sessionFactory.openSession()) {
-            return TemplateProvider.singleObjectTemplate(session, () -> session.get(entityClazz, id, LockMode.READ), entityClazz);
+            return TemplateProvider.singleObjectTemplate(session, () -> session.get(entityClazz, id), entityClazz);
         } catch (Exception ex) {
             logger.error("Something went wrong.", ex);
             throw new HibernateException(ex);
         }
     }
 
-    /**
-    * This method will work properly if the id attribute on the entity has the name <b>id</b>.
-    * Otherwise, the method will return empty collection. If the id attribute has other name than <i>id</i> 
-    * then this method has to be overritten in the specific repository class.
-    */
     @Override
     public List<EntityType> findByIds(Collection<Serializable> ids) {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
+                LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
                 @SuppressWarnings("unchecked")
                 Query<List<EntityType>> query = session.createQuery(
-                        String.format("FROM %s t WHERE t.id IN :ids", entityClazz.getSimpleName())
+                        String.format("FROM %s t WHERE t.%s IN :ids", entityClazz.getSimpleName(), idNames.getFirst())
                 );
                 query.setParameter("ids", ids);
                 return castCollection(query);
@@ -85,6 +82,18 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
             logger.error("Something went wrong.", ex);
             throw new HibernateException(ex);
         }
+    }
+
+    private LinkedHashMap<String, Class<?>> getIdNameAndType() {
+        LinkedHashMap<String, Class<?>> result = new LinkedHashMap<>(1);
+        for (Field field : entityClazz.getDeclaredFields()) {
+            for (Annotation declaredAnnotation : field.getDeclaredAnnotations()) {
+                if (declaredAnnotation.annotationType() == javax.persistence.Id.class) {
+                    result.put(field.getName(), field.getType());
+                }
+            }
+        }
+        return result;
     }
 
     protected List<EntityType> castCollection(Query<List<EntityType>> query) {
@@ -121,9 +130,10 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
                         session.clear();
                     }
                 }
+                LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
                 @SuppressWarnings("unchecked")
                 Query<List<EntityType>> query = session.createQuery(
-                        String.format("FROM %s t WHERE t.id IN :ids", entityClazz.getSimpleName())
+                        String.format("FROM %s t WHERE t.%s IN :ids", entityClazz.getSimpleName(), idNames.getFirst())
                 );
                 query.setParameter("ids", ids);
                 return castCollection(query);
@@ -146,15 +156,17 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     }
 
     @Override
-    public boolean deleteByIds(Collection<Serializable> entitieIds) {
+    public boolean deleteByIds(Collection<Serializable> entityIds) {
         try (Session session = sessionFactory.openSession()) {
             Optional<Boolean> deleted = TemplateProvider.singleObjectTemplate(session, () -> {
+                final LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
                 CriteriaBuilder cb = session.getCriteriaBuilder();
                 CriteriaDelete<EntityType> delete = cb.createCriteriaDelete(entityClazz);
                 Root<EntityType> from = delete.from(entityClazz);
-                delete.where(cb.in(from.get("id")).value(entitieIds));
+                delete.where(cb.in(from.get(idNames.getFirst())).value(entityIds));
+                //query to execute: delete from EntityType where id in :ids
                 int result = session.createQuery(delete).executeUpdate();
-                return result == entitieIds.size();
+                return result == entityIds.size();
             }, Boolean.class);
             return deleted.orElse(false);
         } catch (Exception ex) {
