@@ -113,7 +113,7 @@ public final class MockProviderTest {
         final Optional<TestEntity> actual = testEntityDao.save(new TestEntity(true, LocalDateTime.now()));
 
         assertThat(actual.isPresent()).isTrue();
-        assertThat(actual.get().getId()).isNotNull();
+        assertThat(actual.get().getEntityId()).isNotNull();
     }
 
     @Test
@@ -126,7 +126,7 @@ public final class MockProviderTest {
         final List<TestEntity> actual = testEntityDao.saveAll(entities);
 
         assertThat(actual.isEmpty()).isFalse();
-        actual.forEach(carEntity -> assertThat(carEntity.getId()).isPositive());
+        actual.forEach(carEntity -> assertThat(carEntity.getEntityId()).isPositive());
     }
 
     @Test
@@ -143,7 +143,7 @@ public final class MockProviderTest {
 
         //check @BeforeAll method
         assertThat(actual.isPresent()).isTrue();
-        assertThat(actual.get().getId()).isEqualTo(id);
+        assertThat(actual.get().getEntityId()).isEqualTo(id);
     }
 
     @Test
@@ -153,7 +153,7 @@ public final class MockProviderTest {
 
         //check @BeforeAll method
         assertThat(actual).hasSize(ids.size());
-        assertThat(actual.stream().map(TestEntity::getId).collect(toList()))
+        assertThat(actual.stream().map(TestEntity::getEntityId).collect(toList()))
                 .containsExactly(1, 2);
     }
 
@@ -178,7 +178,7 @@ public final class MockProviderTest {
     void givenTestEntity_whenGetIdFiledTypeAndName_thenReturnIdNameAndItsType() {
         final LinkedHashMap<String, Class<?>> idAndType = getIdAndType();
 
-        assertThat(idAndType.keySet()).containsExactly("id");
+        assertThat(idAndType.keySet()).containsExactly("entityId");
         assertThat(idAndType.values()).containsExactly(Integer.class);
     }
 

@@ -66,7 +66,7 @@ public class Main {
 
         testBean.ifPresent(bean -> {
             boolean delete = repository.delete(bean);
-            LOGGER.info("Record with id {} deleted [{}].", bean.getId(), delete);
+            LOGGER.info("Record with id {} deleted [{}].", bean.getEntityId(), delete);
         });
     }
 

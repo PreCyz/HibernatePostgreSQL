@@ -45,9 +45,10 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     public List<EntityType> findAll() {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
+                final LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
                 @SuppressWarnings("unchecked")
                 Query<List<EntityType>> query = session.createQuery(
-                        String.format("FROM %s t ORDER BY t.id", entityClazz.getSimpleName()));
+                        String.format("FROM %s t ORDER BY t.%s", entityClazz.getSimpleName(), idNames.getFirst()));
                 return castCollection(query);
             });
         } catch (Exception ex) {

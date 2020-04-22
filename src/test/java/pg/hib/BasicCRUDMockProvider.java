@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import pg.hib.dao.BasicCRUD;
 
 import java.io.Serializable;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -104,7 +105,7 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
     private void mockWriteMethods(Class<EntityType> entityClass, MockType mockObj) {
         when(mockObj.save(any(entityClass))).then((Answer<Optional<EntityType>>) invocationOnMock -> {
             final EntityType entity = invocationOnMock.getArgument(0);
-            final Field id = entity.getClass().getDeclaredField("id");
+            final Field id = getIdField(entity).getFirst();
             id.setAccessible(true);
             id.set(entity, getValueForId(id, new Random().nextInt(1000)));
             LOGGER.info("Entity of type {} was saved. {} id was given.", entity.getClass(), id.get(entity));
@@ -117,16 +118,28 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
             for (EntityType entity : entities) {
                 idNumber++;
                 try {
-                    final Field id = entity.getClass().getDeclaredField("id");
+                    final Field id = getIdField(entity).getFirst();
                     id.setAccessible(true);
                     id.set(entity, getValueForId(id, idNumber));
                     LOGGER.info("Entity of type {} was saved. {} id was given.", entity.getClass(), idNumber);
-                } catch (IllegalAccessException | NoSuchFieldException e) {
+                } catch (IllegalAccessException e) {
                     LOGGER.error("Could not provide id for the entity {}.", entity, e);
                 }
             }
             return entities;
         });
+    }
+
+    private LinkedList<Field> getIdField(EntityType entity) {
+        LinkedList<Field> result = new LinkedList<>();
+        for (Field field : entity.getClass().getDeclaredFields()) {
+            for (Annotation declaredAnnotation : field.getDeclaredAnnotations()) {
+                if (declaredAnnotation.annotationType() == javax.persistence.Id.class) {
+                    result.add(field);
+                }
+            }
+        }
+        return result;
     }
 
     private Serializable getValueForId(Field field, long value) {

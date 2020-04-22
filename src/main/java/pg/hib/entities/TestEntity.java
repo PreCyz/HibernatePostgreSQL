@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 public class TestEntity implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @Column(name = "entity_id")
+    private Integer entityId;
 
     @Column
     private boolean active;
@@ -24,18 +25,18 @@ public class TestEntity implements Serializable {
         this(null, active, created);
     }
 
-    public TestEntity(Integer id, boolean active, LocalDateTime created) {
-        this.id = id;
+    public TestEntity(Integer entityId, boolean active, LocalDateTime created) {
+        this.entityId = entityId;
         this.active = active;
         this.created = created;
     }
 
-    public Integer getId() {
-        return id;
+    public Integer getEntityId() {
+        return entityId;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setEntityId(Integer entityId) {
+        this.entityId = entityId;
     }
 
     public boolean isActive() {
@@ -56,8 +57,8 @@ public class TestEntity implements Serializable {
 
     @Override
     public String toString() {
-        return "TestBean{" +
-                "id=" + id +
+        return "TestEntity{" +
+                "entityId=" + entityId +
                 ", active=" + active +
                 ", created=" + created +
                 '}';
