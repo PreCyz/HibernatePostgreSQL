@@ -231,6 +231,6 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
 
     protected EntityType castObject(Object[] fields) {
         throw new HibernateException("In order to use native SQL select query this method has to be implemented.");
-    };
+    }
 
 }
