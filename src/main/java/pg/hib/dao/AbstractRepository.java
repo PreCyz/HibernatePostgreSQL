@@ -104,6 +104,14 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
         }
         return records;
     }
+    
+    protected List<EntityType> castCollection(Collection<Serializable> entities) {
+        final List<EntityType> records = new LinkedList<>();
+        for (final Serializable o : entities) {
+            records.add(entityClazz.cast(o));
+        }
+        return records;
+    }
 
     @Override
     public Optional<EntityType> save(EntityType entity) {
@@ -118,26 +126,37 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
         }
     }
 
-    @Override
     public List<EntityType> saveAll(List<EntityType> entities) {
         try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
                 Set<Serializable> ids = new LinkedHashSet<>();
+                boolean batchExecuted = false;
                 for (int i = 0; i < entities.size(); i++) {
                     Serializable id = session.save(entities.get(i));
                     ids.add(id);
-                    if (i % batchSize == 0) {
+                    batchExecuted = false;
+                    if (i > 0 && i % batchSize == 0) {
                         session.flush();
                         session.clear();
+                        batchExecuted = true;
                     }
                 }
-                LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
-                @SuppressWarnings("unchecked")
-                Query<List<EntityType>> query = session.createQuery(
-                        String.format("FROM %s t WHERE t.%s IN :ids", entityClazz.getSimpleName(), idNames.getFirst())
-                );
-                query.setParameter("ids", ids);
-                return castCollection(query);
+                if (!batchExecuted) {
+                    session.flush();
+                    session.clear();
+                }
+
+                if (ids.stream().allMatch(item -> item.getClass() == entityClazz)) {
+                    return castCollection(ids);
+                } else {
+                    LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
+                    @SuppressWarnings("unchecked")
+                    Query<List<EntityType>> query = session.createQuery(
+                            String.format("FROM %s t WHERE t.%s IN :ids", entityClazz.getSimpleName(), idNames.getFirst())
+                    );
+                    query.setParameter("ids", ids);
+                    return castCollection(query);
+                }
             });
         } catch (Exception ex) {
             logger.error("Something went wrong.", ex);
