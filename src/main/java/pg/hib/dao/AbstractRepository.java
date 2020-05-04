@@ -235,22 +235,18 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     }
 
     @Override
-    public List<EntityType> executeSelectQuery(final String selectQuery) {
+    public List<EntityType> executeSelectQuery(final String selectQuery, final EntityFieldMapper<EntityType> mapper) {
         try (Session session = sessionFactory.openSession()) {
 
             return TemplateProvider.collectionTemplate(session, () -> {
                 @SuppressWarnings("unchecked")
                 NativeQuery<Object[]> sql = session.createSQLQuery(selectQuery);
-                return sql.getResultStream().map(this::castObject).collect(toList());
+                return sql.getResultStream().map(mapper::map).collect(toList());
             });
         } catch (Exception ex) {
             logger.error("Something went wrong.", ex);
             throw new HibernateException(ex);
         }
-    }
-
-    protected EntityType castObject(Object[] fields) {
-        throw new HibernateException("In order to use native SQL select query this method has to be implemented.");
     }
 
 }

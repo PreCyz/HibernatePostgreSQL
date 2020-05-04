@@ -41,7 +41,6 @@ class CarRepository extends AbstractRepository<CarEntity> implements CarDao {
             }
     }
 
-    @Override
     protected CarEntity castObject(Object[] fields) {
         try {
             final Class<?>[] parameterTypes = Arrays.stream(CarEntity.class.getDeclaredFields())

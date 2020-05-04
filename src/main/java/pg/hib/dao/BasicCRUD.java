@@ -22,7 +22,7 @@ public interface BasicCRUD<EntityType extends Serializable> {
 
     boolean deleteAll(Collection<EntityType> entities);
 
-    abstract List<EntityType> executeSelectQuery(String selectQuery);
+    abstract List<EntityType> executeSelectQuery(String selectQuery,  final EntityFieldMapper<EntityType> mapper);
 
-    boolean executeUpdateQuery(String sqlQuery);
+    boolean executeUpdateQuery(final String sqlQuery);
 }

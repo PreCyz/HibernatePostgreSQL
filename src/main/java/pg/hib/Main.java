@@ -7,6 +7,7 @@ import pg.hib.dao.CarDao;
 import pg.hib.dao.DaoFactory;
 import pg.hib.dao.TestEntityDao;
 import pg.hib.entities.CarEntity;
+import pg.hib.entities.LocalDateTimeConverter;
 import pg.hib.entities.TestEntity;
 import pg.hib.providers.HibernateSessionProvider;
 
@@ -116,7 +117,15 @@ public class Main {
         final boolean queryResult = repository.executeUpdateQuery("update cars c set active = NOT active");
         LOGGER.info("Result is here {}", queryResult);
 
-        final List<CarEntity> carEntities = repository.executeSelectQuery("SELECT * FROM cars WHERE active = true");
+        final List<CarEntity> carEntities = repository.executeSelectQuery(
+                "SELECT * FROM cars WHERE active = true",
+                fields -> new CarEntity(
+                        Long.valueOf(String.valueOf(fields[0])),
+                        Boolean.parseBoolean(String.valueOf(fields[1])),
+                        new LocalDateTimeConverter().convertToEntityAttribute(String.valueOf(fields[2])),
+                        new LocalDateTimeConverter().convertToEntityAttribute(String.valueOf(fields[3]))
+                )
+        );
         LOGGER.info("{}", carEntities);
     }
 
