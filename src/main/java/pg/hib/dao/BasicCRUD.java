@@ -3,6 +3,7 @@ package pg.hib.dao;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface BasicCRUD<EntityType extends Serializable> {
@@ -22,7 +23,9 @@ public interface BasicCRUD<EntityType extends Serializable> {
 
     boolean deleteAll(Collection<EntityType> entities);
 
-    abstract List<EntityType> executeSelectQuery(String selectQuery,  final EntityFieldMapper<EntityType> mapper);
+    List<EntityType> executeSelectQuery(
+            String selectQuery, final Map<String, Object> paramMap, final EntityFieldMapper<EntityType> mapper
+    );
 
-    boolean executeUpdateQuery(final String sqlQuery);
+    boolean executeUpdateQuery(final String sqlQuery, final Map<String, Object> paramMap);
 }

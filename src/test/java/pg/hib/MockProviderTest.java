@@ -98,7 +98,7 @@ public final class MockProviderTest {
 
     @Test
     void givenCarEntityUpdateQuery_whenExecuteUpdateQuery_thenReturnFalse() {
-        final boolean result = carDao.executeUpdateQuery("update cars set active = NOT active");
+        final boolean result = carDao.executeUpdateQuery("update cars set active = NOT active", Collections.emptyMap());
 
         assertThat(result).isTrue();
     }
@@ -107,6 +107,7 @@ public final class MockProviderTest {
     void givenTestBeanSelectQuery_whenExecuteUpdateQuery_thenThrowHibernateException() {
         final List<CarEntity> carEntities = carDao.executeSelectQuery(
                 "select * from cars",
+                Collections.emptyMap(),
                 fields -> new CarEntity(
                         Long.valueOf(String.valueOf(fields[0])),
                         Boolean.parseBoolean(String.valueOf(fields[1])),
@@ -167,7 +168,7 @@ public final class MockProviderTest {
 
     @Test
     void givenTestEntityUpdateQuery_whenExecuteUpdateQuery_thenReturnFalse() {
-        final boolean result = testEntityDao.executeUpdateQuery("update test_bean set active = NOT active");
+        final boolean result = testEntityDao.executeUpdateQuery("update test_bean set active = NOT active", Collections.emptyMap());
 
         assertThat(result).isFalse();
     }
@@ -175,7 +176,7 @@ public final class MockProviderTest {
     @Test
     void givenTestEntitySelectQuery_whenExecuteUpdateQuery_thenThrowHibernateException() {
         try {
-            testEntityDao.executeSelectQuery("select * from test_bean", fields -> new TestEntity());
+            testEntityDao.executeSelectQuery("select * from test_bean", Collections.emptyMap(), fields -> new TestEntity());
             fail("Should throw HibernateException.");
         } catch (HibernateException ex) {
             assertThat(ex.getMessage()).isEqualTo("In order to use native SQL select query this method has to be implemented.");

@@ -159,11 +159,11 @@ public final class BasicCRUDMockProvider<EntityType extends Serializable, MockTy
     }
 
     private void mockExecuteUpdate(Class<EntityType> entityClass, MockType mockObj) {
-        when(mockObj.executeUpdateQuery(anyString())).thenReturn(updateAnswer);
+        when(mockObj.executeUpdateQuery(anyString(), anyMap())).thenReturn(updateAnswer);
     }
 
     private void mockExecuteSelect(Class<EntityType> entityClass, MockType mockObj) {
-        final OngoingStubbing<List<EntityType>> when = when(mockObj.executeSelectQuery(anyString(), any()));
+        final OngoingStubbing<List<EntityType>> when = when(mockObj.executeSelectQuery(anyString(), anyMap(), any()));
         if (selectQueryResult == null) {
             when.thenThrow(
                     new HibernateException("In order to use native SQL select query this method has to be implemented.")

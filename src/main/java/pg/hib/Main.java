@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
 
 public class Main {
@@ -114,11 +115,15 @@ public class Main {
         carByIds = repository.findAll();
         LOGGER.info("There are: {} cars.", carByIds.size());
 
-        final boolean queryResult = repository.executeUpdateQuery("update cars c set active = NOT active");
+        final boolean queryResult = repository.executeUpdateQuery(
+                "update cars c set active = NOT active",
+                Collections.emptyMap()
+        );
         LOGGER.info("Result is here {}", queryResult);
 
         final List<CarEntity> carEntities = repository.executeSelectQuery(
-                "SELECT * FROM cars WHERE active = true",
+                "SELECT * FROM cars WHERE active = :active",
+                Stream.of("active").collect(toMap(value -> value, value -> true)),
                 fields -> new CarEntity(
                         Long.valueOf(String.valueOf(fields[0])),
                         Boolean.parseBoolean(String.valueOf(fields[1])),

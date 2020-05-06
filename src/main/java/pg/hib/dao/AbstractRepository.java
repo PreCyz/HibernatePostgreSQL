@@ -218,11 +218,12 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     }
 
     @Override
-    public boolean executeUpdateQuery(final String updateQuery) {
+    public boolean executeUpdateQuery(final String updateQuery, final Map<String, Object> paramMap) {
         try (Session session = sessionFactory.openSession()) {
             Optional<Boolean> queryExec = TemplateProvider.singleObjectTemplate(session, () -> {
                 @SuppressWarnings("rawtypes")
                 NativeQuery sql = session.createSQLQuery(updateQuery);
+                setQueryParameters(sql, paramMap);
                 final int result = sql.executeUpdate();
                 logger.info("The result of the query {}.", result);
                 return true;
@@ -234,13 +235,23 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
         }
     }
 
-    @Override
-    public List<EntityType> executeSelectQuery(final String selectQuery, final EntityFieldMapper<EntityType> mapper) {
-        try (Session session = sessionFactory.openSession()) {
+    private void setQueryParameters(Query sql, Map<String, Object> paramMap) {
+        if (paramMap != null && !paramMap.isEmpty()) {
+            for (Map.Entry<String, Object> entry : paramMap.entrySet()) {
+                sql.setParameter(entry.getKey(), entry.getValue());
+            }
+        }
+    }
 
+    @Override
+    public List<EntityType> executeSelectQuery(
+            final String selectQuery, final Map<String, Object> paramMap, final EntityFieldMapper<EntityType> mapper
+    ) {
+        try (Session session = sessionFactory.openSession()) {
             return TemplateProvider.collectionTemplate(session, () -> {
                 @SuppressWarnings("unchecked")
                 NativeQuery<Object[]> sql = session.createSQLQuery(selectQuery);
+                setQueryParameters(sql, paramMap);
                 return sql.getResultStream().map(mapper::map).collect(toList());
             });
         } catch (Exception ex) {
