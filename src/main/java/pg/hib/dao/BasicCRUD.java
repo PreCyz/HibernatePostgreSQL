@@ -27,5 +27,5 @@ public interface BasicCRUD<EntityType extends Serializable> {
             String selectQuery, final Map<String, Object> paramMap, final EntityFieldMapper<EntityType> mapper
     );
 
-    boolean executeUpdateQuery(final String sqlQuery, final Map<String, Object> paramMap);
+    boolean executeUpdateQuery(final String sqlQuery, final Map<String, ?> paramMap);
 }

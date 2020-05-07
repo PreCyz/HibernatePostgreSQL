@@ -70,19 +70,21 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     @Override
     public List<EntityType> findByIds(Collection<Serializable> ids) {
         try (Session session = sessionFactory.openSession()) {
-            return TemplateProvider.collectionTemplate(session, () -> {
-                LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
-                @SuppressWarnings("unchecked")
-                Query<List<EntityType>> query = session.createQuery(
-                        String.format("FROM %s t WHERE t.%s IN :ids", entityClazz.getSimpleName(), idNames.getFirst())
-                );
-                query.setParameter("ids", ids);
-                return castCollection(query);
-            });
+            return TemplateProvider.collectionTemplate(session, () -> getEntitiesByIds(ids, session));
         } catch (Exception ex) {
             logger.error("Something went wrong.", ex);
             throw new HibernateException(ex);
         }
+    }
+
+    private List<EntityType> getEntitiesByIds(Collection<Serializable> ids, Session session) {
+        LinkedList<String> idNames = new LinkedList<>(getIdNameAndType().keySet());
+        @SuppressWarnings("unchecked")
+        Query<List<EntityType>> query = session.createQuery(
+                String.format("FROM %s t WHERE t.%s IN :ids", entityClazz.getSimpleName(), idNames.getFirst())
+        );
+        query.setParameter("ids", ids);
+        return castCollection(query);
     }
 
     private LinkedHashMap<String, Class<?>> getIdNameAndType() {
@@ -218,7 +220,7 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
     }
 
     @Override
-    public boolean executeUpdateQuery(final String updateQuery, final Map<String, Object> paramMap) {
+    public boolean executeUpdateQuery(final String updateQuery, final Map<String, ?> paramMap) {
         try (Session session = sessionFactory.openSession()) {
             Optional<Boolean> queryExec = TemplateProvider.singleObjectTemplate(session, () -> {
                 @SuppressWarnings("rawtypes")
@@ -235,10 +237,17 @@ abstract class AbstractRepository<EntityType extends Serializable> implements Ba
         }
     }
 
-    private void setQueryParameters(Query sql, Map<String, Object> paramMap) {
+    private void setQueryParameters(Query<?> sql, Map<String, ?> paramMap) {
         if (paramMap != null && !paramMap.isEmpty()) {
-            for (Map.Entry<String, Object> entry : paramMap.entrySet()) {
-                sql.setParameter(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, ?> entry : paramMap.entrySet()) {
+                if (entry.getValue() instanceof Collection) {
+                    sql.setParameterList(entry.getKey(), Collection.class.cast(entry.getValue()));
+                } else if (entry.getValue() instanceof Map) {
+                    throw new HibernateException("You need to have a good reason to set map as parameter. " +
+                                    "I do not know that reasons so please feel free and implement it");
+                } else {
+                    sql.setParameter(entry.getKey(), entry.getValue());
+                }
             }
         }
     }
